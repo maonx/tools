@@ -4,10 +4,11 @@
 import gzip
 import re
 import json
+import socket
 from urllib import request
 from datetime import datetime,timedelta
 
-FIRST_UPDATE = 1
+socket.setdefaulttimeout(20)
 
 update_time=datetime.today()
 def ungzip(data):
@@ -30,7 +31,7 @@ def download_webpage(url):
     }
     try:
         req = request.Request(url, headers = header)
-        page = request.urlopen(req, timeout = 5).read()
+        page = request.urlopen(req).read()
         page_data = ungzip(page)
         catalog = page_data.decode('gbk')
         return catalog
@@ -103,10 +104,11 @@ def update(book):
                     break
                 except:
                     try_time += 1
-                    if try_time > 3:
+                    if try_time > 9:
                         break
-            if try_time ==4:
-                print("Update faild: " + title)
+            if try_time == 10:
+                # print("Update failed: " + title)
+                failed_list.append(title)
                 continue
             chapter_content = md_format(title, chapter_content,
                                         book['category'], book['book_name'])
@@ -117,10 +119,13 @@ def update(book):
 
 if __name__ == "__main__" :
     path = r'source/_posts/'
+    failed_list = []
     is_update=False
     books = get_books("books.json")
     for book in books:
         is_update = update(book)
-    if is_update:
-        save_books(books, "books.json")
+    save_books(books, "books.json")
+    if failed_list :
+        print("Update faild %d chapters!!" % len(failed_list))
+        print('\n'.join(failed_list))
 
