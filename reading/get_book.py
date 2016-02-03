@@ -22,11 +22,8 @@ def ungzip(data):
 
 def filter_chapter(chapters):
     seen = set()
-    patten = re.compile(r'楔子|外传|章|卷|节');
     for chapter in chapters:
         chapter_name = chapter[1]
-        if not patten.search(chapter_name):
-            continue
         if chapter_name not in seen:
             yield chapter
             seen.add(chapter_name)
@@ -92,7 +89,7 @@ def get_catalog_content(book):
     return catalog
 
 def get_chapter_list(catalog):
-    regex = re.compile(r'<li><a href="(.*)">(.*)</a></li>')
+    regex = re.compile(r'<li><a href="(.*)">(.*(楔子|外传|章|卷|节).*)</a></li>')
     try:
         chapters = regex.findall(catalog)
         return list(filter_chapter(chapters))
@@ -123,7 +120,7 @@ def save_books(books, books_json):
 def get_latest_posts(book):
     catalog = get_catalog_content(book)
     chapters = get_chapter_list(catalog)
-    print(book['bookname'] + '有 ' + str(len(chapters)) + ' 个章节更新')
+    print('\n %s有 %d 个章节更新:' % (book['bookname'], len(chapters)))
     for index, chapter in enumerate(chapters):
         title, content = get_chapter_content(chapter)
         generate_post(book['bookname'], title, content)
